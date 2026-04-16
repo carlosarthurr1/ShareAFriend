@@ -1,0 +1,22 @@
+{
+  "name": "My Website",
+  "url": "https://mysite.com",
+  "friends": [
+    {
+      "name": "Marginalia Search",
+      "url": "https://search.marginalia.nu",
+      "desc": "Independent web search engine",
+      "feed": "https://search.marginalia.nu/shareafriend.json"
+    },
+    {
+      "name": "LOW TECH MAGAZINE",
+      "url": "https://solar.lowtechmagazine.com",
+      "desc": "Solar-powered blog about sustainable tech"
+    },
+    {
+      "name": "250kb.club",
+      "url": "https://250kb.club",
+      "desc": "Websites that are lightweight and fast"
+    }
+  ]
+}
