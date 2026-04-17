@@ -62,7 +62,25 @@
     ".saf-compact .saf-link{padding:5px 14px}" +
     ".saf-compact .saf-header{padding:10px 14px}" +
     ".saf-compact .saf-favicon{width:16px;height:16px}" +
-    ".saf-compact .saf-desc{display:none}";
+    ".saf-compact .saf-desc{display:none}" +
+    ".saf-has-photo .saf-name::after{content:' \u2022';color:var(--saf-text2);opacity:.5;margin-left:4px}" +
+    ".saf-polaroid{position:fixed;top:0;left:0;pointer-events:none;width:180px;" +
+    "background:#fefefe;padding:10px 10px 38px;z-index:999999;" +
+    "box-shadow:0 18px 40px rgba(0,0,0,.28),0 4px 10px rgba(0,0,0,.15);" +
+    "opacity:0;transition:opacity .18s ease;will-change:transform;" +
+    "transform-origin:top center}" +
+    ".saf-polaroid.saf-visible{opacity:1}" +
+    ".saf-polaroid::before{content:'';position:absolute;top:-10px;left:50%;" +
+    "width:60px;height:18px;background:rgba(230,210,160,.65);" +
+    "transform:translateX(-50%) rotate(-3deg);border-radius:1px;" +
+    "box-shadow:0 1px 2px rgba(0,0,0,.1)}" +
+    ".saf-polaroid-img{display:block;width:160px;height:160px;object-fit:cover;" +
+    "background:#f0f0f0;border-radius:1px}" +
+    ".saf-polaroid-cap{text-align:center;margin-top:12px;font-size:17px;" +
+    "line-height:1;color:#222;font-family:'Segoe Script','Bradley Hand'," +
+    "'Brush Script MT','Marker Felt','Comic Sans MS',cursive;" +
+    "white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+    "@media(hover:none){.saf-polaroid{display:none}}";
 
   function injectStyles() {
     if (stylesInjected) return;
@@ -101,6 +119,24 @@
     return node;
   }
 
+  // Valid XFN (XHTML Friends Network) rel values, plus 'me'.
+  // Keeps widget from emitting garbage rel tokens that could confuse search engines.
+  var VALID_RELS = {
+    contact: 1, acquaintance: 1, friend: 1, met: 1, "co-worker": 1,
+    colleague: 1, "co-resident": 1, neighbor: 1, child: 1, parent: 1,
+    sibling: 1, spouse: 1, kin: 1, muse: 1, crush: 1, date: 1,
+    sweetheart: 1, me: 1
+  };
+
+  function normalizeRel(rel) {
+    if (!rel) return "";
+    return String(rel)
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(function (t) { return t && VALID_RELS[t]; })
+      .join(" ");
+  }
+
   function renderItem(link) {
     var img = el("img", {
       className: "saf-favicon",
@@ -114,27 +150,173 @@
       this.style.visibility = "hidden";
     };
 
-    var infoChildren = [
-      el("div", { className: "saf-name", textContent: link.name || link.url }),
-    ];
+    // Semantic microformat: each link is an h-card (indieweb-parseable)
+    var nameEl = el("div", {
+      className: "saf-name p-name",
+      textContent: link.name || link.url,
+    });
+    var infoChildren = [nameEl];
     if (link.desc) {
       infoChildren.push(
-        el("div", { className: "saf-desc", textContent: link.desc })
+        el("div", {
+          className: "saf-desc p-note",
+          textContent: link.desc,
+        })
       );
     }
+
+    var anchorClass = "saf-link h-card u-url" +
+      (link.photo ? " saf-has-photo" : "");
+
+    // Build rel. We INTENTIONALLY drop noreferrer so the friend's analytics
+    // can see us as the referring source (credit for driving traffic).
+    // We keep noopener for security. XFN rel values (friend, met, etc.)
+    // are appended when provided.
+    var xfnRel = normalizeRel(link.rel);
+    var relAttr = xfnRel ? xfnRel + " noopener" : "noopener";
 
     var anchor = el(
       "a",
       {
-        className: "saf-link",
+        className: anchorClass,
         href: link.url,
         target: "_blank",
-        rel: "noopener noreferrer",
+        rel: relAttr,
+        title: link.name || link.url,
       },
       [img, el("div", { className: "saf-info" }, infoChildren)]
     );
 
+    if (link.photo) {
+      attachPolaroid(anchor, link);
+    }
+
     return el("li", { className: "saf-item" }, [anchor]);
+  }
+
+  function attachPolaroid(linkEl, link) {
+    // Skip on touch-only devices
+    if (window.matchMedia && window.matchMedia("(hover: none)").matches) return;
+
+    var polaroid = null;
+    var rafId = null;
+    var mouseX = 0, mouseY = 0;
+    var curX = 0, curY = 0, curRot = 0;
+    var prefersReduced =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function buildPolaroid() {
+      var p = document.createElement("div");
+      p.className = "saf-polaroid";
+
+      var pimg = document.createElement("img");
+      pimg.className = "saf-polaroid-img";
+      pimg.src = link.photo;
+      pimg.alt = "";
+      pimg.onerror = function () {
+        this.style.background = "#eee";
+      };
+      p.appendChild(pimg);
+
+      var cap = document.createElement("div");
+      cap.className = "saf-polaroid-cap";
+      cap.textContent = link.photoCaption || link.name || "";
+      p.appendChild(cap);
+
+      return p;
+    }
+
+    function clamp(v, lo, hi) {
+      return v < lo ? lo : v > hi ? hi : v;
+    }
+
+    function targetPos() {
+      // Offset the polaroid from the cursor; flip to other side if near edge
+      var pw = 200, ph = 240;
+      var tx = mouseX + 30;
+      var ty = mouseY - ph / 2;
+      if (tx + pw > window.innerWidth - 10) tx = mouseX - pw - 10;
+      ty = clamp(ty, 10, window.innerHeight - ph - 10);
+      return { x: tx, y: ty };
+    }
+
+    function animate() {
+      if (!polaroid) return;
+      var t = targetPos();
+
+      var dx = t.x - curX;
+      var dy = t.y - curY;
+
+      // Spring follow (lag creates natural swing)
+      curX += dx * 0.18;
+      curY += dy * 0.18;
+
+      // Rotation reacts to horizontal lag — pendulum feel
+      var targetRot = clamp(dx * 0.45, -22, 22);
+      curRot += (targetRot - curRot) * 0.12;
+
+      polaroid.style.transform =
+        "translate(" + curX.toFixed(2) + "px," + curY.toFixed(2) + "px) " +
+        "rotate(" + curRot.toFixed(2) + "deg)";
+
+      rafId = requestAnimationFrame(animate);
+    }
+
+    function onEnter(e) {
+      if (polaroid) return;
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      var t = targetPos();
+      curX = t.x;
+      curY = t.y;
+      curRot = prefersReduced ? 0 : -6;
+
+      polaroid = buildPolaroid();
+      polaroid.style.transform =
+        "translate(" + curX + "px," + curY + "px) rotate(" + curRot + "deg)";
+      document.body.appendChild(polaroid);
+
+      // Trigger fade-in on next frame
+      requestAnimationFrame(function () {
+        if (polaroid) polaroid.classList.add("saf-visible");
+      });
+
+      if (!prefersReduced) {
+        rafId = requestAnimationFrame(animate);
+      }
+    }
+
+    function onMove(e) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      if (prefersReduced && polaroid) {
+        var t = targetPos();
+        curX = t.x;
+        curY = t.y;
+        polaroid.style.transform =
+          "translate(" + curX + "px," + curY + "px) rotate(0deg)";
+      }
+    }
+
+    function onLeave() {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      if (polaroid) {
+        var p = polaroid;
+        polaroid = null;
+        p.classList.remove("saf-visible");
+        setTimeout(function () {
+          if (p.parentNode) p.parentNode.removeChild(p);
+        }, 200);
+      }
+    }
+
+    linkEl.addEventListener("mouseenter", onEnter);
+    linkEl.addEventListener("mousemove", onMove);
+    linkEl.addEventListener("mouseleave", onLeave);
   }
 
   function fetchJSON(url) {
@@ -146,6 +328,29 @@
       .catch(function () {
         return null;
       });
+  }
+
+  // Progressive enhancement: if the container already has <a> tags,
+  // extract them as link data. Lets crawlers (and no-JS users) see real
+  // links in source HTML, while JS enhances the display.
+  function extractLinksFromHTML(container) {
+    var anchors = container.querySelectorAll("a[href]");
+    var out = [];
+    for (var i = 0; i < anchors.length; i++) {
+      var a = anchors[i];
+      var href = a.getAttribute("href");
+      if (!href || href.charAt(0) === "#") continue;
+      out.push({
+        name: a.textContent.trim() || href,
+        url: href,
+        desc: a.getAttribute("data-desc") || a.getAttribute("title") || "",
+        photo: a.getAttribute("data-photo") || "",
+        photoCaption: a.getAttribute("data-photo-caption") || "",
+        rel: a.getAttribute("rel") || "",
+        feed: a.getAttribute("data-feed") || "",
+      });
+    }
+    return out;
   }
 
   function discoverFriends(links) {
@@ -193,6 +398,14 @@
     if (!container) {
       console.error("[ShareAFriend] Container not found:", opts.el);
       return;
+    }
+
+    // Progressive enhancement: harvest any static <a> tags already in the
+    // container as link data (so they're crawlable without JS). Explicit
+    // `links` option takes precedence.
+    if (!options || !options.links || options.links.length === 0) {
+      var harvested = extractLinksFromHTML(container);
+      if (harvested.length) opts.links = harvested;
     }
 
     this.container = container;

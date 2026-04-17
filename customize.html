@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customize your widget — ShareAFriend</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --c-bg: #fafafa;
+      --c-surface: #fff;
+      --c-surface2: #f4f4f5;
+      --c-text: #1a1a1a;
+      --c-text2: #666;
+      --c-border: #e4e4e7;
+      --c-accent: #1a6be6;
+      --c-accent-h: #104da0;
+      --c-danger: #d93025;
+      --c-success: #16a34a;
+      --c-code-bg: #1e1e20;
+      --c-code-text: #e4e4e7;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      --mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --c-bg: #0f0f10;
+        --c-surface: #1c1c1e;
+        --c-surface2: #252527;
+        --c-text: #e5e5e7;
+        --c-text2: #98989f;
+        --c-border: #38383a;
+        --c-accent: #64a8f0;
+        --c-accent-h: #8cc0f5;
+        --c-danger: #ff6961;
+        --c-success: #4ade80;
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--c-bg);
+      color: var(--c-text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    a { color: var(--c-accent); text-decoration: none; }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--c-border);
+      background: var(--c-surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar h1 {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .topbar h1 span { color: var(--c-accent); }
+
+    .topbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Layout */
+    .app {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0;
+      min-height: calc(100vh - 54px);
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .panel-left {
+      border-right: 1px solid var(--c-border);
+    }
+
+    @media (max-width: 900px) {
+      .panel-left { border-right: none; border-bottom: 1px solid var(--c-border); }
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 600;
+      color: var(--c-text2);
+      margin-bottom: 10px;
+    }
+
+    /* Form */
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--c-text2);
+      margin-bottom: 4px;
+    }
+
+    .field input, .field select, .field textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--c-border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: var(--font);
+      background: var(--c-surface);
+      color: var(--c-text);
+    }
+
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none;
+      border-color: var(--c-accent);
+      box-shadow: 0 0 0 2px rgba(26, 107, 230, 0.15);
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 7px 14px;
+      border: 1px solid var(--c-border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: var(--font);
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--c-surface);
+      color: var(--c-text);
+      transition: all .15s;
+    }
+
+    .btn:hover { background: var(--c-surface2); }
+
+    .btn-primary {
+      background: var(--c-accent);
+      border-color: var(--c-accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--c-accent-h);
+      border-color: var(--c-accent-h);
+    }
+
+    .btn-danger {
+      color: var(--c-danger);
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .btn-icon {
+      padding: 4px 6px;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    /* Link list */
+    .link-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      transition: border-color .15s;
+    }
+
+    .link-card.editing {
+      border-color: var(--c-accent);
+      box-shadow: 0 0 0 2px rgba(26, 107, 230, 0.1);
+    }
+
+    .link-card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .link-card-favicon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      background: var(--c-surface2);
+      object-fit: contain;
+    }
+
+    .link-card-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .link-card-name {
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--c-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .link-card-meta {
+      font-size: 11px;
+      color: var(--c-text2);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .link-card-meta span {
+      display: inline-block;
+    }
+
+    .link-card-tag {
+      background: var(--c-surface2);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .link-card-tag.ok { color: var(--c-success); }
+    .link-card-tag.rel { color: var(--c-accent); }
+
+    .link-card-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .link-card-form {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--c-border);
+      display: none;
+    }
+
+    .link-card.editing .link-card-form {
+      display: block;
+    }
+
+    .link-card-form-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--c-text2);
+      font-size: 13px;
+      background: var(--c-surface);
+      border: 1px dashed var(--c-border);
+      border-radius: 8px;
+    }
+
+    /* Preview area */
+    .preview-stage {
+      background: var(--c-surface2);
+      border: 1px solid var(--c-border);
+      border-radius: 10px;
+      padding: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 240px;
+      position: relative;
+    }
+
+    .preview-stage::after {
+      content: 'Hover links with photos to see the Polaroid effect';
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: var(--c-text2);
+      opacity: 0.5;
+      letter-spacing: 0.3px;
+    }
+
+    /* Code tabs */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 0;
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    .tab {
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--c-text2);
+      border: none;
+      background: transparent;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      font-family: var(--font);
+    }
+
+    .tab.active {
+      color: var(--c-accent);
+      border-bottom-color: var(--c-accent);
+    }
+
+    .tab:hover:not(.active) {
+      color: var(--c-text);
+    }
+
+    .code-panel {
+      display: none;
+      position: relative;
+    }
+
+    .code-panel.active {
+      display: block;
+    }
+
+    .code-block {
+      background: var(--c-code-bg);
+      color: var(--c-code-text);
+      padding: 16px;
+      border-radius: 0 0 8px 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre;
+      position: relative;
+      max-height: 320px;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 4px 10px;
+      font-size: 11px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px;
+      cursor: pointer;
+      color: #ccc;
+      font-family: var(--font);
+      z-index: 1;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: var(--c-text);
+      color: var(--c-bg);
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transition: transform .2s, opacity .2s;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .help {
+      font-size: 11px;
+      color: var(--c-text2);
+      margin-top: 2px;
+      font-style: italic;
+    }
+
+    /* Hidden file input */
+    .file-hidden {
+      position: absolute;
+      left: -9999px;
+      opacity: 0;
+    }
+
+    .seo-note {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-left: 3px solid var(--c-success);
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--c-text2);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .seo-note strong { color: var(--c-text); }
+  </style>
+</head>
+<body>
+  <!-- Top bar -->
+  <div class="topbar">
+    <h1>Share<span>A</span>Friend · Customizer</h1>
+    <div class="topbar-actions">
+      <button class="btn btn-sm" id="btn-import">Import JSON</button>
+      <button class="btn btn-sm" id="btn-export">Download JSON</button>
+      <a class="btn btn-sm" href="index.html">&larr; Home</a>
+    </div>
+  </div>
+
+  <input type="file" class="file-hidden" id="file-import" accept=".json,application/json">
+
+  <!-- App -->
+  <div class="app">
+    <!-- Editor -->
+    <div class="panel panel-left">
+      <!-- Widget settings -->
+      <div class="section">
+        <div class="section-title">Widget settings</div>
+        <div class="field-row">
+          <div class="field">
+            <label for="opt-title">Title</label>
+            <input type="text" id="opt-title" value="Friends">
+          </div>
+          <div class="field">
+            <label for="opt-theme">Theme</label>
+            <select id="opt-theme">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="auto">Auto (system)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="opt-compact">Density</label>
+            <select id="opt-compact">
+              <option value="false">Comfortable</option>
+              <option value="true">Compact</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="opt-discover">Discovery</label>
+            <select id="opt-discover">
+              <option value="false">Off</option>
+              <option value="true">Fetch friends-of-friends</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add link -->
+      <div class="section">
+        <div class="section-title">Add a link</div>
+        <div class="seo-note">
+          <strong>Tip:</strong> set an XFN <code>rel</code> (friend, met, colleague&hellip;) to give search engines and IndieWeb tools a semantic signal about the relationship.
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="inp-name">Name <span style="color:var(--c-danger)">*</span></label>
+            <input type="text" id="inp-name" placeholder="Site name">
+          </div>
+          <div class="field">
+            <label for="inp-url">URL <span style="color:var(--c-danger)">*</span></label>
+            <input type="url" id="inp-url" placeholder="https://example.com">
+          </div>
+        </div>
+        <div class="field">
+          <label for="inp-desc">Description</label>
+          <input type="text" id="inp-desc" placeholder="A short description">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="inp-photo">Polaroid photo URL</label>
+            <input type="url" id="inp-photo" placeholder="https://example.com/photo.jpg">
+          </div>
+          <div class="field">
+            <label for="inp-photo-cap">Polaroid caption</label>
+            <input type="text" id="inp-photo-cap" placeholder="Default: friend's name">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="inp-rel">Relationship (XFN)</label>
+            <select id="inp-rel">
+              <option value="">None</option>
+              <option value="contact">contact</option>
+              <option value="acquaintance">acquaintance</option>
+              <option value="friend">friend</option>
+              <option value="friend met">friend met</option>
+              <option value="colleague">colleague</option>
+              <option value="co-worker">co-worker</option>
+              <option value="muse">muse</option>
+              <option value="kin">kin</option>
+              <option value="me">me (for my own profiles)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="inp-feed">JSON feed URL</label>
+            <input type="url" id="inp-feed" placeholder="https://friend.com/shareafriend.json">
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-add" style="width:100%">+ Add link</button>
+      </div>
+
+      <!-- Links list -->
+      <div class="section">
+        <div class="section-title" id="links-count">Your links</div>
+        <div id="link-list"></div>
+      </div>
+    </div>
+
+    <!-- Preview + code -->
+    <div class="panel">
+      <div class="section">
+        <div class="section-title">Live preview</div>
+        <div class="preview-stage">
+          <div id="preview"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Embed options</div>
+        <div class="tabs">
+          <button class="tab active" data-tab="js">JavaScript embed</button>
+          <button class="tab" data-tab="html">Static HTML (SEO)</button>
+          <button class="tab" data-tab="json">shareafriend.json</button>
+        </div>
+        <div class="code-panel active" data-panel="js">
+          <button class="copy-btn" onclick="copyPanel('js')">Copy</button>
+          <pre class="code-block" id="code-js"></pre>
+        </div>
+        <div class="code-panel" data-panel="html">
+          <button class="copy-btn" onclick="copyPanel('html')">Copy</button>
+          <pre class="code-block" id="code-html"></pre>
+        </div>
+        <div class="code-panel" data-panel="json">
+          <button class="copy-btn" onclick="copyPanel('json')">Copy</button>
+          <pre class="code-block" id="code-json"></pre>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">SEO tips</div>
+        <div class="seo-note">
+          <strong>Static HTML + JS:</strong> paste the static HTML inside your widget container, and the JS will enhance it. Crawlers see real <code>&lt;a&gt;</code> tags with XFN rels and <code>h-card</code> microformats even before JS runs.
+        </div>
+        <div class="seo-note">
+          <strong>shareafriend.json:</strong> host this file at <code>/shareafriend.json</code> on your site. Friends who add you can point to it, and their widget will discover <em>your</em> friends — turning into a decentralized social graph.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="shareafriend.js"></script>
+  <script>
+    // ========== State ==========
+    var state = {
+      links: [],
+      title: 'Friends',
+      theme: 'light',
+      compact: false,
+      discover: false,
+      editingId: null,
+    };
+
+    // Assign stable IDs for editing
+    var nextId = 1;
+    function stamp(l) { l._id = nextId++; return l; }
+
+    // ========== DOM refs ==========
+    var $ = function (s) { return document.querySelector(s); };
+    var inp = {
+      name: $('#inp-name'),
+      url: $('#inp-url'),
+      desc: $('#inp-desc'),
+      photo: $('#inp-photo'),
+      photoCap: $('#inp-photo-cap'),
+      rel: $('#inp-rel'),
+      feed: $('#inp-feed'),
+    };
+    var opt = {
+      title: $('#opt-title'),
+      theme: $('#opt-theme'),
+      compact: $('#opt-compact'),
+      discover: $('#opt-discover'),
+    };
+    var linkList = $('#link-list');
+    var linksCount = $('#links-count');
+
+    // ========== Utilities ==========
+    function esc(s) {
+      var d = document.createElement('div');
+      d.textContent = s == null ? '' : s;
+      return d.innerHTML;
+    }
+
+    function normalizeUrl(u) {
+      if (!u) return '';
+      u = u.trim();
+      if (!u) return '';
+      if (/^data:/i.test(u)) return u;
+      if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+      return u;
+    }
+
+    function hostOf(url) {
+      try { return new URL(url).hostname; } catch (e) { return ''; }
+    }
+
+    function toast(msg) {
+      var t = $('#toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(function () { t.classList.remove('show'); }, 1800);
+    }
+
+    // ========== Render ==========
+    function render() {
+      renderWidget();
+      renderList();
+      renderCode();
+    }
+
+    function renderWidget() {
+      ShareAFriend.init({
+        el: '#preview',
+        title: state.title,
+        theme: state.theme,
+        compact: state.compact,
+        links: state.links,
+      });
+    }
+
+    function renderList() {
+      linkList.innerHTML = '';
+      linksCount.textContent = 'Your links (' + state.links.length + ')';
+
+      if (state.links.length === 0) {
+        linkList.innerHTML = '<div class="empty-state">No links yet.<br>Add your first friend above.</div>';
+        return;
+      }
+
+      state.links.forEach(function (link, idx) {
+        linkList.appendChild(buildCard(link, idx));
+      });
+    }
+
+    function buildCard(link, idx) {
+      var card = document.createElement('div');
+      card.className = 'link-card' + (state.editingId === link._id ? ' editing' : '');
+
+      var faviconSrc = 'https://www.google.com/s2/favicons?domain=' + hostOf(link.url) + '&sz=32';
+      var tags = '';
+      if (link.photo) tags += '<span class="link-card-tag ok">Polaroid</span>';
+      if (link.rel) tags += '<span class="link-card-tag rel">rel="' + esc(link.rel) + '"</span>';
+      if (link.feed) tags += '<span class="link-card-tag">feed</span>';
+
+      card.innerHTML =
+        '<div class="link-card-head">' +
+          '<img class="link-card-favicon" src="' + esc(faviconSrc) + '" alt="">' +
+          '<div class="link-card-main">' +
+            '<div class="link-card-name">' + esc(link.name) + '</div>' +
+            '<div class="link-card-meta">' +
+              '<span>' + esc(hostOf(link.url) || link.url) + '</span>' +
+              tags +
+            '</div>' +
+          '</div>' +
+          '<div class="link-card-actions">' +
+            '<button class="btn btn-icon" data-action="up" title="Move up">&uarr;</button>' +
+            '<button class="btn btn-icon" data-action="down" title="Move down">&darr;</button>' +
+            '<button class="btn btn-sm" data-action="edit">Edit</button>' +
+            '<button class="btn btn-sm btn-danger" data-action="del">&times;</button>' +
+          '</div>' +
+        '</div>' +
+        (state.editingId === link._id ? buildEditForm(link) : '');
+
+      card.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        var action = btn.dataset.action;
+        if (action === 'edit') {
+          state.editingId = state.editingId === link._id ? null : link._id;
+          render();
+        } else if (action === 'del') {
+          state.links.splice(idx, 1);
+          render();
+        } else if (action === 'up' && idx > 0) {
+          var tmp = state.links[idx - 1];
+          state.links[idx - 1] = state.links[idx];
+          state.links[idx] = tmp;
+          render();
+        } else if (action === 'down' && idx < state.links.length - 1) {
+          var tmp2 = state.links[idx + 1];
+          state.links[idx + 1] = state.links[idx];
+          state.links[idx] = tmp2;
+          render();
+        } else if (action === 'save') {
+          saveEdit(link);
+        } else if (action === 'cancel') {
+          state.editingId = null;
+          render();
+        }
+      });
+
+      return card;
+    }
+
+    function buildEditForm(link) {
+      return (
+        '<div class="link-card-form">' +
+          '<div class="field-row">' +
+            '<div class="field"><label>Name</label><input type="text" data-edit="name" value="' + esc(link.name) + '"></div>' +
+            '<div class="field"><label>URL</label><input type="url" data-edit="url" value="' + esc(link.url) + '"></div>' +
+          '</div>' +
+          '<div class="field"><label>Description</label><input type="text" data-edit="desc" value="' + esc(link.desc || '') + '"></div>' +
+          '<div class="field-row">' +
+            '<div class="field"><label>Photo URL</label><input type="url" data-edit="photo" value="' + esc(link.photo || '') + '"></div>' +
+            '<div class="field"><label>Photo caption</label><input type="text" data-edit="photoCaption" value="' + esc(link.photoCaption || '') + '"></div>' +
+          '</div>' +
+          '<div class="field-row">' +
+            '<div class="field"><label>rel (XFN)</label>' +
+              '<select data-edit="rel">' +
+                ['', 'contact', 'acquaintance', 'friend', 'friend met', 'colleague', 'co-worker', 'muse', 'kin', 'me'].map(function (r) {
+                  return '<option value="' + r + '"' + (link.rel === r ? ' selected' : '') + '>' + (r || 'None') + '</option>';
+                }).join('') +
+              '</select>' +
+            '</div>' +
+            '<div class="field"><label>Feed URL</label><input type="url" data-edit="feed" value="' + esc(link.feed || '') + '"></div>' +
+          '</div>' +
+          '<div class="link-card-form-actions">' +
+            '<button class="btn btn-sm" data-action="cancel">Cancel</button>' +
+            '<button class="btn btn-sm btn-primary" data-action="save">Save</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function saveEdit(link) {
+      var card = linkList.querySelector('.link-card.editing');
+      if (!card) return;
+      ['name', 'url', 'desc', 'photo', 'photoCaption', 'rel', 'feed'].forEach(function (f) {
+        var el = card.querySelector('[data-edit="' + f + '"]');
+        if (!el) return;
+        var v = el.value.trim();
+        if (f === 'url' || f === 'photo' || f === 'feed') v = normalizeUrl(v);
+        link[f] = v || undefined;
+      });
+      state.editingId = null;
+      render();
+    }
+
+    // ========== Code generation ==========
+    function renderCode() {
+      $('#code-js').textContent = generateJS();
+      $('#code-html').textContent = generateHTML();
+      $('#code-json').textContent = generateJSON();
+    }
+
+    function serializeLinks(indent) {
+      return state.links.map(function (l) {
+        var o = { name: l.name, url: l.url };
+        if (l.desc) o.desc = l.desc;
+        if (l.photo) o.photo = l.photo;
+        if (l.photoCaption) o.photoCaption = l.photoCaption;
+        if (l.rel) o.rel = l.rel;
+        if (l.feed) o.feed = l.feed;
+        return indent + JSON.stringify(o);
+      }).join(',\n');
+    }
+
+    function generateJS() {
+      return (
+        '<div id="shareafriend"></div>\n' +
+        '<script src="https://cdn.jsdelivr.net/gh/carlosarthurr1/shareafriend@latest/shareafriend.js"><\/script>\n' +
+        '<script>\n' +
+        '  ShareAFriend.init({\n' +
+        "    el: '#shareafriend',\n" +
+        '    title: ' + JSON.stringify(state.title) + ',\n' +
+        '    theme: ' + JSON.stringify(state.theme) + ',\n' +
+        (state.compact ? '    compact: true,\n' : '') +
+        (state.discover ? '    discover: true,\n' : '') +
+        '    links: [\n' + serializeLinks('      ') + '\n    ]\n' +
+        '  });\n' +
+        '<\/script>'
+      );
+    }
+
+    function generateHTML() {
+      // Progressive-enhancement pattern: real <a> tags crawlers can read,
+      // plus the JS to enhance them into the widget.
+      var items = state.links.map(function (l) {
+        var rel = l.rel ? ' rel="' + esc(l.rel) + '"' : '';
+        var dataAttrs = '';
+        if (l.desc) dataAttrs += ' data-desc="' + esc(l.desc) + '"';
+        if (l.photo) dataAttrs += ' data-photo="' + esc(l.photo) + '"';
+        if (l.photoCaption) dataAttrs += ' data-photo-caption="' + esc(l.photoCaption) + '"';
+        if (l.feed) dataAttrs += ' data-feed="' + esc(l.feed) + '"';
+        return '    <li><a href="' + esc(l.url) + '"' + rel + dataAttrs + '>' + esc(l.name) + '</a></li>';
+      }).join('\n');
+
+      return (
+        '<div id="shareafriend">\n' +
+        '  <h3>' + esc(state.title) + '</h3>\n' +
+        '  <ul>\n' + items + '\n  </ul>\n' +
+        '</div>\n' +
+        '<script src="https://cdn.jsdelivr.net/gh/carlosarthurr1/shareafriend@latest/shareafriend.js"><\/script>\n' +
+        '<script>\n' +
+        '  ShareAFriend.init({\n' +
+        "    el: '#shareafriend',\n" +
+        '    title: ' + JSON.stringify(state.title) + ',\n' +
+        '    theme: ' + JSON.stringify(state.theme) + '\n' +
+        '  });\n' +
+        '<\/script>'
+      );
+    }
+
+    function generateJSON() {
+      var obj = {
+        version: 1,
+        name: 'My Website',
+        url: 'https://mysite.com',
+        friends: state.links.map(function (l) {
+          var o = { name: l.name, url: l.url };
+          if (l.desc) o.desc = l.desc;
+          if (l.photo) o.photo = l.photo;
+          if (l.photoCaption) o.photoCaption = l.photoCaption;
+          if (l.rel) o.rel = l.rel;
+          if (l.feed) o.feed = l.feed;
+          return o;
+        })
+      };
+      return JSON.stringify(obj, null, 2);
+    }
+
+    // ========== Events ==========
+    $('#btn-add').addEventListener('click', function () {
+      var name = inp.name.value.trim();
+      var url = normalizeUrl(inp.url.value);
+      if (!name || !url) {
+        toast('Name and URL are required');
+        return;
+      }
+      var link = {
+        name: name,
+        url: url,
+        desc: inp.desc.value.trim() || undefined,
+        photo: normalizeUrl(inp.photo.value) || undefined,
+        photoCaption: inp.photoCap.value.trim() || undefined,
+        rel: inp.rel.value || undefined,
+        feed: normalizeUrl(inp.feed.value) || undefined,
+      };
+      state.links.push(stamp(link));
+
+      Object.keys(inp).forEach(function (k) {
+        if (inp[k].tagName === 'SELECT') inp[k].selectedIndex = 0;
+        else inp[k].value = '';
+      });
+      inp.name.focus();
+      render();
+    });
+
+    // Widget setting changes
+    opt.title.addEventListener('input', function () { state.title = opt.title.value || 'Friends'; render(); });
+    opt.theme.addEventListener('change', function () { state.theme = opt.theme.value; render(); });
+    opt.compact.addEventListener('change', function () { state.compact = opt.compact.value === 'true'; render(); });
+    opt.discover.addEventListener('change', function () { state.discover = opt.discover.value === 'true'; render(); });
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+        document.querySelectorAll('.code-panel').forEach(function (p) { p.classList.remove('active'); });
+        tab.classList.add('active');
+        document.querySelector('.code-panel[data-panel="' + tab.dataset.tab + '"]').classList.add('active');
+      });
+    });
+
+    // Copy
+    window.copyPanel = function (which) {
+      var code = $('#code-' + which).textContent;
+      navigator.clipboard.writeText(code).then(function () {
+        toast('Copied!');
+      });
+    };
+
+    // Import / Export
+    $('#btn-export').addEventListener('click', function () {
+      var blob = new Blob([generateJSON()], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'shareafriend.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast('Downloaded shareafriend.json');
+    });
+
+    $('#btn-import').addEventListener('click', function () { $('#file-import').click(); });
+    $('#file-import').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        try {
+          var data = JSON.parse(ev.target.result);
+          if (!data.friends || !Array.isArray(data.friends)) throw new Error('Invalid format');
+          state.links = data.friends.map(stamp);
+          render();
+          toast('Imported ' + data.friends.length + ' links');
+        } catch (err) {
+          toast('Invalid JSON file');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    // Enter adds link
+    Object.keys(inp).forEach(function (k) {
+      inp[k].addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && inp[k].tagName !== 'SELECT') {
+          e.preventDefault();
+          $('#btn-add').click();
+        }
+      });
+    });
+
+    // ========== Seed ==========
+    state.links = [
+      stamp({
+        name: 'Marginalia Search',
+        url: 'https://search.marginalia.nu',
+        desc: 'Independent web search',
+        rel: 'friend',
+        photo: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=400&fit=crop',
+        photoCaption: 'me & the marginalia crew'
+      }),
+      stamp({
+        name: 'LOW TECH MAGAZINE',
+        url: 'https://solar.lowtechmagazine.com',
+        desc: 'Solar-powered blog',
+        rel: 'muse',
+        photo: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=400&fit=crop'
+      }),
+      stamp({
+        name: '250kb.club',
+        url: 'https://250kb.club',
+        desc: 'Lightweight websites',
+        rel: 'contact'
+      }),
+    ];
+
+    render();
+  </script>
+</body>
+</html>

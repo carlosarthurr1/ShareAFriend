@@ -405,10 +405,13 @@
     <h1>Share<span>A</span>Friend</h1>
     <p>A tiny JavaScript widget that brings back the blogroll. Link to sites you love, embed the widget, and help build the open social web.</p>
     <div class="hero-badges">
-      <span>~3 KB</span>
+      <span>~10 KB</span>
       <span>Zero dependencies</span>
       <span>Self-hosted</span>
-      <span>Dark mode</span>
+      <span>Polaroid hover</span>
+    </div>
+    <div style="margin-top:24px">
+      <a href="customize.html" class="btn btn-primary" style="display:inline-block;text-decoration:none;padding:10px 22px;font-weight:500">Open the customizer &rarr;</a>
     </div>
   </div>
 
@@ -483,6 +486,12 @@
             </div>
           </div>
           <div class="form-row">
+            <div class="form-col">
+              <label for="inp-photo">Polaroid photo URL <span style="opacity:.5">(optional — appears on hover)</span></label>
+              <input type="url" id="inp-photo" placeholder="https://example.com/photo.jpg">
+            </div>
+          </div>
+          <div class="form-row">
             <button class="btn btn-primary" id="btn-add" style="width:100%">+ Add link</button>
           </div>
 
@@ -542,6 +551,44 @@
       </div>
     </div>
 
+    <!-- SEO / Link building -->
+    <div class="section">
+      <h2>Built for link building</h2>
+      <p>ShareAFriend isn't just a widget — it's real, crawlable, semantic backlinks.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">&#10003;</div>
+          <h3>Real <code>&lt;a&gt;</code> tags</h3>
+          <p>No iframes, no JS redirects, no tracking wrappers. Search engines see the actual URLs.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">&#10003;</div>
+          <h3>Followed by default</h3>
+          <p>No <code>nofollow</code>. Link juice flows to the sites you endorse, just like a classic blogroll.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">&#10003;</div>
+          <h3>Referer preserved</h3>
+          <p>We drop <code>noreferrer</code> so your friends' analytics see you as the referring source.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">&#10003;</div>
+          <h3>XFN microformats</h3>
+          <p>Mark relationships with <code>rel="friend"</code>, <code>met</code>, <code>colleague</code>&hellip; Same format the old blogosphere used.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">&#10003;</div>
+          <h3>h-card ready</h3>
+          <p>Each link is an <code>h-card</code>. IndieWeb parsers and Webmention tools can read your blogroll as structured data.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">&#10003;</div>
+          <h3>No-JS fallback</h3>
+          <p>Put static <code>&lt;a&gt;</code> tags inside the container — JS enhances them. Crawlers see real links even without executing JS.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Advanced usage -->
     <div class="section">
       <h2>Advanced usage</h2>
@@ -557,6 +604,17 @@
     discover: true                   // show friends-of-friends
   });
 &lt;/script&gt;</div>
+
+      <p style="margin-top:24px">For maximum SEO, use the progressive-enhancement pattern — real links in the HTML, enhanced by JS:</p>
+      <div class="code-block"><button class="copy-btn" onclick="copyEl(this)">Copy</button>&lt;div id="shareafriend"&gt;
+  &lt;h3&gt;Friends&lt;/h3&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;a href="https://alice.blog" rel="friend met"&gt;Alice's Blog&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="https://bob.dev" rel="colleague"&gt;Bob's Notes&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/div&gt;
+&lt;script src="shareafriend.js"&gt;&lt;/script&gt;
+&lt;script&gt;ShareAFriend.init({ el: '#shareafriend' });&lt;/script&gt;</div>
     </div>
 
   </div>
@@ -573,6 +631,7 @@
     var inpName = document.getElementById('inp-name');
     var inpUrl = document.getElementById('inp-url');
     var inpDesc = document.getElementById('inp-desc');
+    var inpPhoto = document.getElementById('inp-photo');
     var optTitle = document.getElementById('opt-title');
     var optTheme = document.getElementById('opt-theme');
     var linkList = document.getElementById('link-list');
@@ -606,7 +665,7 @@
         var info = document.createElement('div');
         info.className = 'link-info';
         info.innerHTML =
-          '<div class="link-name">' + esc(link.name) + '</div>' +
+          '<div class="link-name">' + esc(link.name) + (link.photo ? ' <span title="Has Polaroid photo" style="color:var(--c-accent)">\u25A3</span>' : '') + '</div>' +
           '<div class="link-url">' + esc(link.url) + '</div>' +
           (link.desc ? '<div class="link-desc-text">' + esc(link.desc) + '</div>' : '');
 
@@ -629,6 +688,7 @@
       var linksStr = links.map(function(l) {
         var parts = ['      { name: ' + JSON.stringify(l.name) + ', url: ' + JSON.stringify(l.url)];
         if (l.desc) parts.push('desc: ' + JSON.stringify(l.desc));
+        if (l.photo) parts.push('photo: ' + JSON.stringify(l.photo));
         return parts.join(', ') + ' }';
       }).join(',\n');
 
@@ -667,16 +727,24 @@
       var name = inpName.value.trim();
       var url = inpUrl.value.trim();
       var desc = inpDesc.value.trim();
+      var photo = inpPhoto.value.trim();
 
       if (!name || !url) return;
 
       // Ensure URL has protocol
       if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      if (photo && !/^https?:\/\/|^data:/i.test(photo)) photo = 'https://' + photo;
 
-      links.push({ name: name, url: url, desc: desc || undefined });
+      links.push({
+        name: name,
+        url: url,
+        desc: desc || undefined,
+        photo: photo || undefined
+      });
       inpName.value = '';
       inpUrl.value = '';
       inpDesc.value = '';
+      inpPhoto.value = '';
       inpName.focus();
       refreshWidget();
     }
@@ -684,7 +752,7 @@
     btnAdd.addEventListener('click', addLink);
 
     // Enter key adds link
-    [inpName, inpUrl, inpDesc].forEach(function(inp) {
+    [inpName, inpUrl, inpDesc, inpPhoto].forEach(function(inp) {
       inp.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -714,10 +782,20 @@
       });
     }
 
-    // Seed with demo data
+    // Seed with demo data — try hovering the ones with photos!
     links = [
-      { name: 'Marginalia Search', url: 'https://search.marginalia.nu', desc: 'Independent web search' },
-      { name: 'LOW TECH MAGAZINE', url: 'https://solar.lowtechmagazine.com', desc: 'Solar-powered blog' },
+      {
+        name: 'Marginalia Search',
+        url: 'https://search.marginalia.nu',
+        desc: 'Independent web search',
+        photo: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=400&fit=crop'
+      },
+      {
+        name: 'LOW TECH MAGAZINE',
+        url: 'https://solar.lowtechmagazine.com',
+        desc: 'Solar-powered blog',
+        photo: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=400&fit=crop'
+      },
       { name: '250kb.club', url: 'https://250kb.club', desc: 'Lightweight websites' }
     ];
 
